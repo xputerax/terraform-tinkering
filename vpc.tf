@@ -105,3 +105,11 @@ resource "aws_default_route_table" "default-rt" {
         "Name" = "default-containment-rt"
     }
 }
+
+resource "aws_ec2_instance_connect_endpoint" "ap-southeast-5a-eice" {
+    subnet_id = aws_subnet.ap-southeast-5-terraform-vpc-5a-private-subnet.id
+    preserve_client_ip = false
+    tags = {
+        "Name" = "ap-southeast-5a-eice"
+    }
+}
