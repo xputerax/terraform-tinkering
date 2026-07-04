@@ -28,6 +28,12 @@ resource "aws_launch_template" "this" {
     security_groups = [aws_security_group.ec2-sg.id]
     # subnet_id = aws_subnet.ec2-autoscaling-vpc-private-subnet.id
   }
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      "Name" = "ec2-autoscaling-node"
+    }
+  }
   image_id = data.aws_ami.amazon-linux.image_id
   user_data = base64encode(<<-EOF
     #!/bin/bash
