@@ -12,7 +12,7 @@ resource "aws_launch_template" "ecs-node-lt" {
     aws_security_group.ecs-node-sg.id,
     aws_security_group.eice-sg.id,
   ]
-  image_id               = data.aws_ami.amazon-linux.image_id
+  image_id               = data.aws_ssm_parameter.ecs_optimized_ami.value
   update_default_version = true
   tag_specifications {
     resource_type = "instance"
@@ -23,13 +23,9 @@ resource "aws_launch_template" "ecs-node-lt" {
   user_data = base64encode(<<-EOF
     #!/bin/bash
     dnf install -y httpd
-    dnf install -y ecs-init
     systemctl enable --now httpd
     echo "<h1>Hello from $(hostname -f)</h1>" > /var/www/html/index.html
-    mkdir -p /etc/ecs
-    touch /etc/ecs/ecs.config
     echo "ECS_CLUSTER=${aws_ecs_cluster.this.name}" >> /etc/ecs/ecs.config
-    systemctl enable --now --no-block ecs.service
   EOF
   )
   iam_instance_profile {
@@ -318,6 +314,20 @@ resource "aws_ecs_service" "echo-server" {
     container_port   = "80"
     target_group_arn = aws_lb_target_group.ecs-service-echo-server-tg.arn
   }
+
+  # register this service with CloudMap
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_private_dns_namespace.ecs-cluster-dns.arn
+    service {
+      discovery_name = "echo-server"
+      port_name      = "web"
+      client_alias {
+        port = 80
+      }
+    }
+  }
+
   network_configuration {
     assign_public_ip = false
     security_groups = [
@@ -333,4 +343,9 @@ resource "aws_ecs_service" "echo-server" {
 # alternative to setting awslogs options `awslogs-create-group = true`
 resource "aws_cloudwatch_log_group" "echo-server" {
   name = "/ecs/echo-server"
+}
+
+resource "aws_service_discovery_private_dns_namespace" "ecs-cluster-dns" {
+  vpc  = aws_vpc.this.id
+  name = "ecs-cluster-dns"
 }
