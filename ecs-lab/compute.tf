@@ -212,6 +212,16 @@ resource "aws_security_group_rule" "ecs-node-sg-allow-from-lb-rule" {
   source_security_group_id = aws_security_group.ecs-lab-lb-egress-to-node-sg.id
 }
 
+# Uncomment this to allow ECS node to talk to ECS task directly (i.e. `curl <task ENI IP>`)
+# resource "aws_security_group_rule" "ecs-node-sg-allow-from-itself" {
+#   security_group_id        = aws_security_group.ecs-node-sg.id
+#   from_port                = 80
+#   to_port                  = 80
+#   protocol                 = "tcp"
+#   type                     = "ingress"
+#   source_security_group_id = aws_security_group.ecs-node-sg.id
+# }
+
 resource "aws_security_group_rule" "ecs-node-sg-allow-outbound-everywhere" {
   security_group_id = aws_security_group.ecs-node-sg.id
   from_port         = 0
