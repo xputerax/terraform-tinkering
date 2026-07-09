@@ -4,6 +4,8 @@
 
 Elastic Container Service (ECS) Lab. This deploys a service `echo-server-service` which contains the [ealen/echo-server](https://hub.docker.com/r/ealen/echo-server) container.
 
+![Simplified Diagram](diagram.png)
+
 Verify communication between ALB/EC2:
 
 ```bash
