@@ -21,7 +21,8 @@
       "logDriver": "awslogs",
       "options": {
         "awslogs-region": "ap-southeast-5",
-        "awslogs-group": "/ecs/echo-server"
+        "awslogs-group": "/ecs/echo-server",
+        "awslogs-stream-prefix": "echo-server"
       }
     },
     "healthCheck": {
