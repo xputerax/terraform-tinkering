@@ -325,7 +325,7 @@ resource "aws_lb_target_group" "ecs-service-echo-server-tg" {
 resource "aws_ecs_task_definition" "echo-server" {
   family                = "echo-server"
   container_definitions = file("echo-server.container-definition.json")
-  memory                = 128
+  memory                = 1024
   cpu                   = 512
   network_mode          = "awsvpc"
   execution_role_arn    = aws_iam_role.ecs-execution-role.arn # for the ECS agent (here we need to register to target group)

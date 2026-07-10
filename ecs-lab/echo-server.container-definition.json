@@ -2,8 +2,6 @@
   {
     "name": "echo-server",
     "image": "ealen/echo-server",
-    "cpu": 512,
-    "memory": 128,
     "portMappings": [
       {
         "name": "web",
