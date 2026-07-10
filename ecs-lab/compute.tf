@@ -111,6 +111,12 @@ resource "aws_autoscaling_group" "ecs-asg" {
     propagate_at_launch = true
     value               = true
   }
+
+  # Since we specified default_capacity_provider_strategy/capacity_provider_strategy
+  # ECS managed scaling now owns desired_capacity; don't let Terraform fight it.
+  lifecycle {
+    ignore_changes = [desired_capacity]
+  }
 }
 
 resource "aws_lb_target_group" "this" {
@@ -287,12 +293,23 @@ resource "aws_ecs_cluster_capacity_providers" "ecs-lab-cluster-capacityproviders
   capacity_providers = toset([
     aws_ecs_capacity_provider.ecs-asg-provider.name,
   ])
+  # this allows ECS to add more nodes in the capacity provider
+  default_capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.ecs-asg-provider.name
+    base              = 1
+    weight            = 100
+  }
 }
 
 resource "aws_ecs_capacity_provider" "ecs-asg-provider" {
   name = "asg-provider"
   auto_scaling_group_provider {
     auto_scaling_group_arn = aws_autoscaling_group.ecs-asg.arn
+    managed_scaling {
+      instance_warmup_period = 10
+      status                 = "ENABLED"
+      target_capacity        = 100
+    }
   }
 }
 
@@ -320,6 +337,19 @@ resource "aws_ecs_service" "echo-server" {
   cluster         = aws_ecs_cluster.this.arn
   desired_count   = local.echo_server_task_count
   task_definition = aws_ecs_task_definition.echo-server.arn
+
+  # Route this service through the capacity provider so ECS managed scaling owns the ASG.
+  # Must match what's live, or Terraform will null it out and silently break cluster scaling.
+  capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.ecs-asg-provider.name
+    weight            = 100
+    base              = 1
+  }
+
+  # Required by the provider whenever capacity_provider_strategy is part of an update.
+  # AFTER this apply succeeds, set this to false (or remove it) so you don't force a
+  # redeploy on every subsequent `terraform apply`.
+  # force_new_deployment = true
 
   # register this service with the load balancer target group
   load_balancer {
