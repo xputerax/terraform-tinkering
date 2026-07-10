@@ -297,11 +297,12 @@ resource "aws_ecs_capacity_provider" "ecs-asg-provider" {
 }
 
 resource "aws_lb_target_group" "ecs-service-echo-server-tg" {
-  name        = "ecs-lab-service-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.this.id
-  target_type = "ip"
+  name                 = "ecs-lab-service-tg"
+  port                 = 80
+  protocol             = "HTTP"
+  vpc_id               = aws_vpc.this.id
+  target_type          = "ip"
+  deregistration_delay = 30 # seconds (default 300). echo-server is stateless; lowers deploy drain time.
 }
 
 resource "aws_ecs_task_definition" "echo-server" {
@@ -350,6 +351,13 @@ resource "aws_ecs_service" "echo-server" {
       aws_subnet.private-subnet-2.id,
     ]
   }
+
+  # Drain old tasks before launching new ones. The default (minimum_healthy_percent=100)
+  # forces launch-new-first, which deadlocks when the cluster has no spare CPU to run the
+  # replacement. 50 lets ECS drain down toward ~half before standing up to the next TD version
+  # Use 0 for maximum rollout speed at the cost of temporary capacity loss.
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 150
 }
 
 # alternative to setting awslogs options `awslogs-create-group = true`
