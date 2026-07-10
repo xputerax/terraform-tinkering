@@ -1,8 +1,8 @@
 locals {
-  node_instance_type   = "t3.medium"
-  asg_min_size         = 1
-  asg_max_size         = 3
-  asg_desired_capacity = 1
+  node_instance_type     = "c6i.large"
+  asg_min_size           = 1
+  asg_max_size           = 3
+  asg_desired_capacity   = 2
   echo_server_task_count = 8 # BEWARE: EC2 ENI Limit (we are using awsvpc networking)
 }
 
