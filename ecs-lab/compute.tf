@@ -3,6 +3,7 @@ locals {
   asg_min_size         = 1
   asg_max_size         = 3
   asg_desired_capacity = 1
+  echo_server_task_count = 8 # BEWARE: EC2 ENI Limit (we are using awsvpc networking)
 }
 
 resource "aws_launch_template" "ecs-node-lt" {
@@ -316,8 +317,9 @@ resource "aws_ecs_task_definition" "echo-server" {
 resource "aws_ecs_service" "echo-server" {
   name            = "echo-server-service"
   cluster         = aws_ecs_cluster.this.arn
-  desired_count   = 1
+  desired_count   = local.echo_server_task_count
   task_definition = aws_ecs_task_definition.echo-server.arn
+
   # register this service with the load balancer target group
   load_balancer {
     container_name   = "echo-server"
