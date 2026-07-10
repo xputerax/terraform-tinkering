@@ -30,3 +30,8 @@ output "node_launchtemplate_version" {
   description = "Default version for ECS Node Launch Template"
   type        = number
 }
+
+output "task_definition_version" {
+  value = aws_ecs_task_definition.echo-server.revision
+  type  = number
+}
